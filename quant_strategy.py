@@ -1,17 +1,38 @@
 import os
+import argparse
 from dotenv import load_dotenv
 from finlab import data, backtest, login
 
 
-def load_api_key(env_var="FINLAB_API_TOKEN"):
+def load_api_key(env_file: str, env_var: str) -> None:
     """Retrieve API token from environment variable or .env file."""
-    load_dotenv()
+    load_dotenv(env_file)
     token = os.getenv(env_var)
-    if token:
-        login(token)
-    else:
+    if not token:
         raise EnvironmentError(
-            f"Missing API token. Please set {env_var} environment variable.")
+            f"Missing API token. Please set {env_var} or provide {env_file}"
+        )
+    login(token)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run FinLab QUAN backtest")
+    parser.add_argument(
+        "--start",
+        default="2020",
+        help="Backtest start date (YYYY or YYYY-MM-DD)",
+    )
+    parser.add_argument(
+        "--env-file",
+        default=".env",
+        help="Path to .env file containing the API token",
+    )
+    parser.add_argument(
+        "--token-var",
+        default="FINLAB_API_TOKEN",
+        help="Environment variable name for the API token",
+    )
+    return parser.parse_args()
 
 
 def build_position(rebalance_dates):
@@ -36,13 +57,14 @@ def build_position(rebalance_dates):
     return eq_price[base_filter].reindex(rebalance_dates).is_largest(20)
 
 
-def run_backtest(start='2020'):
-    rebalance = data.get('fundamental_features:淨值除資產').deadline().index
+def run_backtest(start="2020"):
+    rebalance = data.get("fundamental_features:淨值除資產").deadline().index
     position = build_position(rebalance)
     return backtest.sim(position.loc[start:], resample=rebalance)
 
 
 if __name__ == "__main__":
-    load_api_key()
-    result = run_backtest()
+    args = parse_args()
+    load_api_key(args.env_file, args.token_var)
+    result = run_backtest(args.start)
     print(result.display())

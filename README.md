@@ -19,9 +19,9 @@ environment variable or place it inside a `.env` file.
    ```bash
    FINLAB_API_TOKEN=your_token_here
    ```
-3. Run the backtest:
+3. Run the backtest (optional arguments shown with defaults):
    ```bash
-   python quant_strategy.py
+   python quant_strategy.py --start 2020 --env-file .env --token-var FINLAB_API_TOKEN
    ```
 
 The script will log into the FinLab platform using your token, construct the
